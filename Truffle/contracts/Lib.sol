@@ -1,53 +1,62 @@
 pragma solidity >=0.5.0 <0.7.5;
 pragma experimental ABIEncoderV2;
-
 contract Lib {
     
     struct OfferBid {
             string id_user;
             uint qty_energy;
-            uint typ;
             uint price_energy;
-            uint status;
+            uint quality_energy;
+            uint premium_preference_quality;
+            string type_position;
+            uint number_position;
+            uint status_position;
             uint t_submission;
             uint ts_delivery;
-            uint number;
-            uint quality_energy;
        }
     struct MarketResult {
         string id_user_offer;
         uint qty_energy_offer;
         uint price_energy_offer;
         uint quality_energy_offer;
-        uint type_offer;
-        uint number_offer;
-        uint status_offer;
+        uint premium_preference_quality_offer;
+        string type_position_offer;
+        uint number_position_offer;
+        uint status_position_offer;
         uint t_submission_offer;
         uint ts_delivery;
         string id_user_bid;
         uint qty_energy_bid;
         uint price_energy_bid;
         uint quality_energy_bid;
-        uint type_bid;
-        uint number_bid;
-        uint status_bid;
+        uint premium_preference_quality_bid;
+        string type_position_bid;
+        uint number_position_bid;
+        uint status_position_bid;
         uint t_submission_bid;
-        uint price_energy_cleared_uniform;
-        uint price_energy_cleared_discriminative;
+        uint price_energy_market_uniform;
+        uint price_energy_market_discriminative;
         uint qty_energy_traded;
+        uint share_quality_NA;
+        uint share_quality_local;
+        uint share_quality_green;
+        uint share_quality_green_local;
     }
     struct MarketResultTotal {
         string user_id_offer;
-        uint price_offer;
-        uint quality_offer;
-        uint number_offer;
-        uint t_delivery;
-        string user_id_bid;
-        uint price_bid;
-        uint number_bid;
-        uint price_cleared_uniform;
-        uint price_cleared_discriminative;
-        uint qty_traded;
+        uint price_energy_offer;
+        uint number_position_offer;
+        uint ts_delivery;
+        string id_user_bid;
+        uint price_energy_bid;
+        uint number_position_bid;
+        uint price_energy_market_uniform;
+        uint price_energy_market_discriminative;
+        uint qty_energy_traded;
+        uint share_quality_NA;
+        uint share_quality_local;
+        uint share_quality_green;
+        uint share_quality_green_local;
         uint t_cleared;
     }
     struct UserInfo {
@@ -56,6 +65,10 @@ contract Lib {
             uint t_update_balance;
             uint price_energy_bid_max;
             uint price_energy_offer_min;
+            string preference_quality;
+            uint premium_preference_quality;
+            string type_market_agent;
+            uint horizon_trading;
             uint ts_delivery_first;
             uint ts_delivery_last;
     }
@@ -65,19 +78,19 @@ contract Lib {
         uint type_meter;
         string id_meter_main;
         string id_aggregator;
-        uint quality_energy;
+        string quality_energy;
         uint ts_delivery_first;
         uint ts_delivery_last;
         string info_additional;
     }
-      
+    //return true if a list of user infos has at least one user with id_user as the argument given in input
     function check_user_id_in_user_infos(string memory id_user, UserInfo[] memory user_infos) public pure returns(bool) {
         for(uint i = 0; i < user_infos.length; i++) {
             if(compareStrings(user_infos[i].id_user, id_user)) return true;
         }
         return false;
     }
-    
+    //same as check_user_id_in_user_infos. it also checks if ts_delivery is between ts_delivery_first and ts_delivery_last of the user
     function check_user_id_in_user_infos_interval(string memory id_user, uint ts_delivery, UserInfo[] memory user_infos) public pure returns(bool) {
         for(uint i = 0; i < user_infos.length; i++) {
             if(compareStrings(user_infos[i].id_user, id_user)) {
@@ -86,7 +99,7 @@ contract Lib {
         }
         return false;
     }
-    
+    //return true if the two strings given in input have the same value
     function compareStrings(string memory a, string memory b) public pure returns (bool) {
         return (keccak256(abi.encodePacked((a))) == keccak256(abi.encodePacked((b))));
     }
@@ -101,18 +114,35 @@ contract Lib {
             result := mload(add(source, 32))
         }
     }
-    //compares two pairs of numbers and returns a boolean according if one wants ascending/descending
-    function compare(uint val_one_first, uint val_two_first, uint val_one_second, uint val_two_second, bool ascending_first, bool ascending_second) public pure returns(bool) {
+    //compares two pairs of numbers and returns a boolean according if one wants ascending/descending sorting
+    function compare_two_keys(uint val_one_first, uint val_two_first, uint val_one_second, uint val_two_second, bool ascending_first, bool ascending_second) public pure returns(bool) {
         if (val_one_first != val_two_first) {
             if (ascending_first)  return val_two_first > val_one_first;
             else return val_two_first < val_one_first;
         }
         else {
+            if (val_two_second == val_one_second) return true;
             if (ascending_second) return val_two_second > val_one_second;
             else return val_two_second < val_one_second;
         }
     }
-    //copies an array and its values from index start to index end
+    //compares two triplets of numbers and returns a boolean according if one wants ascending/descending sorting
+    function compare_three_keys(uint val_one_first, uint val_two_first, uint val_one_second, uint val_two_second, uint val_one_third, uint val_two_third, bool ascending_first, bool ascending_second, bool ascending_third) public pure returns(bool) {
+        if (val_one_first != val_two_first) {
+            if (ascending_first)  return val_two_first > val_one_first;
+            else return val_two_first < val_one_first;
+        }
+        else {
+            if (val_one_second == val_two_second) {
+                if (val_one_third == val_two_third) return true;
+                if (ascending_third) return val_two_third > val_one_third;
+                else return val_two_third < val_one_third;
+            }
+            if (ascending_second) return val_two_second > val_one_second;
+            else return val_two_second < val_one_second;
+        }
+    }
+    //copies an array of uint and its values from index start to index end
     function copyArray(uint[] memory arr, uint start, uint end) public pure returns(uint[] memory) {
         uint[] memory copy = new uint[](arr.length);
         for(uint i = start; i <= end; i++) {
@@ -120,6 +150,7 @@ contract Lib {
         }
         return copy;
     }
+    //copies an array of UserInfo and its values from index start to index end
     function copyArray_UserInfo(UserInfo[] memory arr, uint start, uint end) public pure returns(UserInfo[] memory) {
         UserInfo[] memory copy = new UserInfo[](arr.length);
         for(uint i = start; i <= end; i++) {
@@ -139,7 +170,7 @@ contract Lib {
         
         return new_arr;
     }
-    //sums the values of an array
+    //sums the values of a uint array
     function sumArrIndices(uint start, uint end, uint[] memory arr) public pure returns (uint) {
         uint s;
 
@@ -150,7 +181,7 @@ contract Lib {
     }
     /*
     takes a list of OfferBid as an input.
-    starting from position 0, to the end of the list, the energy cumulated array is calculated and then returned
+    starting from position 0, to the end of the list, the energy cumulated array is calculated as a sum of the quantity of energy and then returned
     */
     function getEnergyCumulated(OfferBid[] memory offers_bids) public pure returns (uint[] memory) {
         uint[] memory energy_cumulated = new uint[](offers_bids.length);
@@ -183,7 +214,7 @@ contract Lib {
     function concatenateStrings(string memory a, string memory b) public pure returns (string memory) {
         return string(abi.encodePacked(a, b));
     }
-    //converts an uint to string, and then appends it to another string, given in input
+    //converts a uint to string, and then appends it to another string, given in input
     function appendUintToString(string memory inStr, uint v) public pure returns (string memory) {
         uint maxlength = 100;
         bytes memory reversed = new bytes(maxlength);
@@ -216,7 +247,7 @@ contract Lib {
             }
         }
     }
-    /*computes and return an array of differences of the same lenght of the input array.
+    /*computes and return an array of differences of the lenght as the input array -1.
     For every position of the new array, every element of the new array is equal to 
     the difference between the element at the next position in the input array, and the element at the position in the input array
     */
@@ -253,6 +284,7 @@ contract Lib {
         }
         return arr_qualities;
     }
+    //concatenates two arrays of OfferBid into a new array and return it
     function concatenateOffersBids(OfferBid[] memory one, OfferBid[] memory two) public pure returns (OfferBid[] memory) {
         OfferBid[] memory concat = new OfferBid[](one.length + two.length);
         for(uint i = 0; i < one.length; i++) {
@@ -281,7 +313,7 @@ contract Lib {
     }
     //check if an array of OfferBid is sorted
     function checkSortedTsDelivery(OfferBid[] memory offerbid) public pure returns(bool) {
-        for(uint i=0;i<offerbid.length-1;i++) {
+        for(uint i = 0; i < offerbid.length-1; i++) {
             if(offerbid[i].ts_delivery>offerbid[i+1].ts_delivery) {
                 return false;
             }
@@ -308,7 +340,7 @@ contract Lib {
         }
         return lowest;
     }
-    //reverse the order of an array
+    //reverse the order of a uint array
     function reverseArray(uint[] memory arr, uint start, uint end) public pure returns(uint[] memory) {
         uint[] memory rev = new uint[](arr.length);
         for(uint i = 0;i < arr.length;i++) {
@@ -319,7 +351,7 @@ contract Lib {
         }
         return rev;
     }
-    //returns an array of length = end - start + 1, with the elements of the given array from start to end(included)
+    //returns a uint array of length = end - start + 1, with the elements of the given array from start to end(included)
     function cropArray(uint[] memory data, uint start, uint end) public pure returns(uint[] memory){
         uint[] memory cropped = new uint[](end -  start +1);
         uint z = 0;
@@ -329,6 +361,7 @@ contract Lib {
         }
         return cropped;
     }
+    //returns a OfferBid array of length = end - start + 1, with the elements of the given array from start to end(included)
     function cropOfferBids(OfferBid[] memory data, uint start, uint end) public pure returns(OfferBid[] memory){
         OfferBid[] memory cropped = new OfferBid[](end -  start +1);
         uint z = 0;
@@ -364,7 +397,7 @@ contract Lib {
         return count_indices;
     }
     /*
-    for insertionsort. given two sorted arrays until a certain position end_pos, and an element at a position new_element_ind, it find the new position at which the new element should be placed
+    For insertionsort. given two sorted arrays until a certain position end_pos, and an element at a position new_element_ind, it finds the new position at which the new element should be placed
     */
     function findPosition_new_element_sort(uint end_pos, uint new_element_ind, uint[] memory arr_first, uint[] memory arr_second, bool ascending_first, bool ascending_second) public pure returns(uint) {
         uint current_pos = end_pos;
@@ -373,7 +406,7 @@ contract Lib {
         bool go_on = true;
         uint new_ind;
         while(go_on && current_pos >= 0) {
-            if (compare(arr_first[current_pos], new_element_first, arr_second[current_pos], new_element_second, ascending_first, ascending_second)) {
+            if (compare_two_keys(arr_first[current_pos], new_element_first, arr_second[current_pos], new_element_second, ascending_first, ascending_second)) {
                 //if ascending, true if new_element_first>arr_first[current_pos]
                 new_ind = current_pos + 1;
                 go_on = false;
@@ -397,7 +430,7 @@ contract Lib {
         arr[ind_one] = temp;
         return arr;
     }
-    //swap the elements of one array
+    //swap the elements of one array at two indices
     function swap_elements_arr(uint[] memory arr, uint ind_one, uint ind_two) public pure returns(uint[] memory) {
         uint temp = arr[ind_one];
         arr[ind_one] = arr[ind_two];
@@ -420,7 +453,7 @@ contract Lib {
         }
         return data;
     }
-    /*get the count array from an array. the count array as a length equal to the interval of the data.
+    /*get the count array from a uint array. the count array has length equal to the interval of the data.
     it describes how many times every value in the interval is present in the data array
     */
     function getCount(uint[] memory data) public pure returns(uint[] memory) {
@@ -436,7 +469,7 @@ contract Lib {
         
         return count;
     }
-    //reorders an array of uint from start to end index, accoording to new indices
+    //reorders a uint array from start to end index, accoording to new indices
     function reorderArr(uint[] memory new_indices, uint[] memory arr, uint start, uint end) public pure returns(uint[] memory) {
         uint[] memory reordered = new uint[](arr.length);
         for (uint i = start; i <= end; i++) {

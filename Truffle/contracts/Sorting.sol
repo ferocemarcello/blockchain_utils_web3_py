@@ -99,7 +99,7 @@ contract Sorting {
 	    if (i < right)
 	        quickSort_indices_two_arr(arr_first, arr_second, i, right, indices, ascending_first, ascending_second);
 	}
-	//sort an array using the countingsort. it returns the sorted array
+	//sorts an array using the countingsort. it returns the sorted array
 	function countingSort(uint[] memory data, bool ascending) public view returns(uint[] memory){
 	    uint max = lib.maxArray(data);
 	    uint min = lib.minArray(data);
@@ -129,7 +129,7 @@ contract Sorting {
         
         return sorted;
 	}
-	//sort an array using the countingsort. It doesn't return since the array is already modified inside
+	//sorts an array using the countingsort. It doesn't return since the array is already modified inside
 	function countingSort_void(uint[] memory data, uint setSize) public pure {
         uint[] memory set = new uint[](setSize);
         for (uint i = 0; i < data.length; i++) {
@@ -183,7 +183,7 @@ contract Sorting {
         
         return sorted_indices;
 	}
-	//using countingsort, it sort an array of integers, then it sorts an array of OfferBid based on the same sorting and returns it.
+	//using countingsort, it sorts an array of integers, then it sorts an array of OfferBid based on the same sorting and returns it.
 	function get_indices_and_sort_countingsort(uint[] memory values, Lb.Lib.OfferBid[] memory offers_bids, bool ascending) private view returns(Lb.Lib.OfferBid[] memory) {
 		uint[] memory sorted_indices = Sorting.countingSort_indices(values, ascending, 0, values.length-1);
 		Lb.Lib.OfferBid[] memory sorted = new Lb.Lib.OfferBid[](values.length);
@@ -192,7 +192,7 @@ contract Sorting {
 	    }
 	    return sorted;
 	}
-	//same as get_indices_and_sort_countingsort(), but it sorts using two arrays
+	//same as get_indices_and_sort_countingsort(), but it sorts using two arrays(two keys)
 	function get_indices_and_sort_countingsort_two_arr(uint[] memory values_first, uint[] memory values_second, Lb.Lib.OfferBid[] memory offers_bids, bool ascending_first, bool ascending_second) public view returns(Lb.Lib.OfferBid[] memory) {
 		uint[] memory sorted_indices = Sorting.countingSort_indices(values_first, ascending_first, 0, values_first.length-1);
 		
@@ -204,12 +204,6 @@ contract Sorting {
 	    Lb.Lib.OfferBid[] memory sorted_offers_bids = lib.reorderArr_OfferBid(sorted_indices, offers_bids);
 
 	    return sorted_offers_bids;
-	}
-	//it reorders an array based on the sorting done on another array. the sorting is done using the countingsort
-	function sort_and_reorder_arr(uint[] memory data, bool ascending, uint start, uint end, uint[] memory arr) public view returns(uint[] memory) {
-	    uint[] memory modified_indices = countingSort_indices(data, ascending, start, end);
-	    uint[] memory reordered_arr = lib.reorderArr(modified_indices, arr, 0, arr.length-1);
-	    return reordered_arr;
 	}
 	//sorts a second array, in case of same value in a first array
 	function countingsort_by_second_value_indices(uint[] memory sorted_indices, uint[] memory sorted_first, uint[] memory values_second, bool ascending) public view returns(uint[] memory){
@@ -231,7 +225,13 @@ contract Sorting {
 	    }
         return indices;
 	}
-	//using quicksort, it sort an array of integers, then it sorts an array of OfferBid based on the same sorting and returns it.
+	//it reorders an array based on the sorting done on another array. the sorting is done using the countingsort
+	function sort_and_reorder_arr(uint[] memory data, bool ascending, uint start, uint end, uint[] memory arr) public view returns(uint[] memory) {
+	    uint[] memory modified_indices = countingSort_indices(data, ascending, start, end);
+	    uint[] memory reordered_arr = lib.reorderArr(modified_indices, arr, 0, arr.length-1);
+	    return reordered_arr;
+	}
+	//using quicksort, it sorts an array of integers, then it sorts an array of OfferBid based on the same sorting and returns it.
 	function get_indices_and_sort_quicksort(uint[] memory values, Lb.Lib.OfferBid[] memory offers_bids, bool ascending) private view returns(Lb.Lib.OfferBid[] memory) {
 	    uint[] memory indices = new uint[](values.length);
 	    for (uint z = 0; z < indices.length; z++) {
@@ -245,20 +245,6 @@ contract Sorting {
 		for (uint z = 0; z < indices.length; z++) {
             sorted[z] = offers_bids[indices[z]];
 	    }
-	    return sorted;
-	}
-	//same as get_indices_and_sort_quicksort(), but it sorts using two arrays
-	function get_indices_and_sort_two_arr_quicksort(uint[] memory values_first, uint[] memory values_second, Lb.Lib.OfferBid[] memory offers_bids, bool ascending_price, bool ascending_quantity) private pure returns(Lb.Lib.OfferBid[] memory) {
-	    uint[] memory indices = new uint[](values_first.length);
-	    for (uint z = 0; z < indices.length; z++) {
-	        indices[z] = z;
-	    }
-		Sorting.quickSort_indices_two_arr(values_first, values_second, 0, int(values_first.length-1), indices, ascending_price, ascending_quantity);
-		Lb.Lib.OfferBid[] memory sorted = new Lb.Lib.OfferBid[](values_first.length);
-
-		for (uint z = 0; z < indices.length; z++) {
-		    sorted[z] = offers_bids[indices[z]];
-		}
 	    return sorted;
 	}
 	//using quicksort, sorts a list of OfferBid by ts_delivery
@@ -283,6 +269,20 @@ contract Sorting {
 		Lb.Lib.OfferBid[] memory sorted = get_indices_and_sort_two_arr_quicksort(prices,quantities,offers_bids,ascending_price, ascending_quantity);
 		return sorted;
 	}
+	//same as get_indices_and_sort_quicksort(), but it sorts using two arrays
+	function get_indices_and_sort_two_arr_quicksort(uint[] memory values_first, uint[] memory values_second, Lb.Lib.OfferBid[] memory offers_bids, bool ascending_price, bool ascending_quantity) private pure returns(Lb.Lib.OfferBid[] memory) {
+	    uint[] memory indices = new uint[](values_first.length);
+	    for (uint z = 0; z < indices.length; z++) {
+	        indices[z] = z;
+	    }
+		Sorting.quickSort_indices_two_arr(values_first, values_second, 0, int(values_first.length-1), indices, ascending_price, ascending_quantity);
+		Lb.Lib.OfferBid[] memory sorted = new Lb.Lib.OfferBid[](values_first.length);
+
+		for (uint z = 0; z < indices.length; z++) {
+		    sorted[z] = offers_bids[indices[z]];
+		}
+	    return sorted;
+	}
 	//using countingsort, sorts a list of OfferBid by price
 	function countingSortOffersBidsPrice(Lb.Lib.OfferBid[] memory offers_bids, bool ascending) public view returns(Lb.Lib.OfferBid[] memory) {
 		if(offers_bids.length == 0) return offers_bids;
@@ -298,29 +298,28 @@ contract Sorting {
 		Lb.Lib.OfferBid[] memory sorted = get_indices_and_sort_countingsort_two_arr(prices, quantities, offers_bids, ascending_price, ascending_quantity);
 		return sorted;
 	}
-	//gets the indices of the a sorted array, using insertion_sort
-	function getInsertionSortIndices(uint[] memory arr_first, uint[] memory arr_second, bool ascending_first, bool ascending_second) public view returns(uint[] memory) {
-	    uint[] memory new_indices = new uint[](0);
-		bool go_on = true;
-		new_indices = new uint[](1);
+	//perform insertion sort over two keys(i.e. arrays of values). return the corresponding indices
+	function getInsertionSortIndices_two_keys(uint[] memory arr_first, uint[] memory arr_second, bool ascending_first, bool ascending_second) public view returns(uint[] memory) {
+	    uint[] memory new_indices = new uint[](1);
+		bool go_on;
 		new_indices[0] = 0;
 		for(uint i = 1; i < arr_first.length; i++) {
 	        go_on = true;
-	         if (lib.compare(arr_first[i], arr_first[new_indices[0]], arr_second[i], arr_second[new_indices[0]], ascending_first, ascending_second)) {
+        	if (lib.compare_two_keys(arr_first[i], arr_first[new_indices[0]], arr_second[i], arr_second[new_indices[0]], ascending_first, ascending_second)) {
 	            new_indices = lib.add_pos(new_indices, 0);//shift right
 	            new_indices[0] = i;
 	            go_on = false;
-	        }
-	        else if(lib.compare(arr_first[new_indices[new_indices.length - 1]], arr_first[i], arr_second[new_indices[new_indices.length - 1]], arr_second[i], ascending_first, ascending_second)) {
+        	}
+	        else if(lib.compare_two_keys(arr_first[new_indices[new_indices.length - 1]], arr_first[i], arr_second[new_indices[new_indices.length - 1]], arr_second[i], ascending_first, ascending_second)) {
 	            new_indices = lib.add_pos(new_indices, new_indices.length);//shift left
 	            new_indices[new_indices.length-1] = i;
 	            go_on = false;
 	        }
-	        if(go_on && lib.compare(arr_first[new_indices[0]], arr_first[i], arr_second[new_indices[0]], arr_second[i], ascending_first, ascending_second) && lib.compare(arr_first[i], arr_first[new_indices[new_indices.length - 1]], arr_second[i], arr_second[new_indices[new_indices.length - 1]], ascending_first, ascending_second)) {
+	        if(go_on && lib.compare_two_keys(arr_first[new_indices[0]], arr_first[i], arr_second[new_indices[0]], arr_second[i], ascending_first, ascending_second) && lib.compare_two_keys(arr_first[i], arr_first[new_indices[new_indices.length - 1]], arr_second[i], arr_second[new_indices[new_indices.length - 1]], ascending_first, ascending_second)) {
 	            go_on = true;
 	            uint z = 0;
 	            while(go_on) {
-	                if(lib.compare(arr_first[i], arr_first[new_indices[z]], arr_second[i], arr_second[new_indices[z]], ascending_first, ascending_second)) {
+	                if(lib.compare_two_keys(arr_first[i], arr_first[new_indices[z]], arr_second[i], arr_second[new_indices[z]], ascending_first, ascending_second)) {
 	                    new_indices = lib.add_pos(new_indices, z);
 	                    new_indices[z] = i;
 	                    go_on = false;
@@ -331,8 +330,40 @@ contract Sorting {
 		}
 		return new_indices;
 	}
-	//same as getInsertionSortIndices, different version not optimized
-	function getInsertionSortIndices_not_optimized(uint[] memory arr_first, uint[] memory arr_second, bool ascending_first, bool ascending_second) public view returns(uint[] memory) {
+	//same as getInsertionSortIndices_two_keys. this is by three keys
+	function getInsertionSortIndices_three_keys(uint[] memory arr_first, uint[] memory arr_second, uint[] memory arr_third, bool ascending_first, bool ascending_second, bool ascending_third) public view returns(uint[] memory) {
+	    uint[] memory new_indices = new uint[](1);
+		bool go_on;
+		new_indices[0] = 0;
+		for(uint i = 1; i < arr_first.length; i++) {
+	        go_on = true;
+        	if (lib.compare_three_keys(arr_first[i], arr_first[new_indices[0]], arr_second[i], arr_second[new_indices[0]], arr_third[i], arr_third[new_indices[0]], ascending_first, ascending_second, ascending_third)) {
+	            new_indices = lib.add_pos(new_indices, 0);//shift right
+	            new_indices[0] = i;
+	            go_on = false;
+        	}
+	        else if(lib.compare_three_keys(arr_first[new_indices[new_indices.length - 1]], arr_first[i], arr_second[new_indices[new_indices.length - 1]], arr_second[i], arr_third[new_indices[new_indices.length - 1]], arr_third[i], ascending_first, ascending_second, ascending_third)) {
+	            new_indices = lib.add_pos(new_indices, new_indices.length);//shift left
+	            new_indices[new_indices.length-1] = i;
+	            go_on = false;
+	        }
+	        if(go_on && lib.compare_three_keys(arr_first[new_indices[0]], arr_first[i], arr_second[new_indices[0]], arr_second[i], arr_third[new_indices[0]], arr_third[i], ascending_first, ascending_second, ascending_third) && lib.compare_three_keys(arr_first[i], arr_first[new_indices[new_indices.length - 1]], arr_second[i], arr_second[new_indices[new_indices.length - 1]], arr_third[i], arr_third[new_indices[new_indices.length - 1]], ascending_first, ascending_second, ascending_third)) {
+	            go_on = true;
+	            uint z = 0;
+	            while(go_on) {
+	                if(lib.compare_three_keys(arr_first[i], arr_first[new_indices[z]], arr_second[i], arr_second[new_indices[z]], arr_third[i], arr_third[new_indices[z]], ascending_first, ascending_second, ascending_third)) {
+	                    new_indices = lib.add_pos(new_indices, z);
+	                    new_indices[z] = i;
+	                    go_on = false;
+	                }
+	                z++;
+	            }
+	        }
+		}
+		return new_indices;
+	}
+	//same as getInsertionSortIndices_two_keys, different version not optimized
+	function getInsertionSortIndices_two_keys_not_optimized(uint[] memory arr_first, uint[] memory arr_second, bool ascending_first, bool ascending_second) public view returns(uint[] memory) {
 	    uint[] memory new_indices = lib.getIndices(arr_first.length);
 		uint new_ind;
 		
@@ -358,31 +389,51 @@ contract Sorting {
 		if(offers_bids.length == 0) return offers_bids;
 		uint[] memory prices = lib.arr_of_prices_offerbids(offers_bids);
 		uint[] memory quantities = lib.arr_of_quantities_offerbids(offers_bids);
-		uint[] memory new_indices = getInsertionSortIndices(prices, quantities, ascending_price, ascending_quantity);
+		uint[] memory new_indices = getInsertionSortIndices_two_keys(prices, quantities, ascending_price, ascending_quantity);
 		return lib.reorderArr_OfferBid(new_indices, offers_bids);
 	}
-	//using insertionsort, sorts a list of OfferBid by price and then quality
-	function insertionSortOffersBidsPrice_Quality(Lb.Lib.OfferBid[] memory offers_bids, bool ascending_price,  bool ascending_quality) public view returns(Lb.Lib.OfferBid[] memory) {
+	//using insertionsort, sorts a list of OfferBid by price and then quality. if simulation_test is true, it also performs the sort over the additional key of quantity
+	function insertionSortOffersBidsPrice_Quality(Lb.Lib.OfferBid[] memory offers_bids, bool ascending_price,  bool ascending_quality, bool simulation_test, bool ascending_quantity) public view returns(Lb.Lib.OfferBid[] memory) {
 		if(offers_bids.length == 0) return offers_bids;
 		uint[] memory prices = lib.arr_of_prices_offerbids(offers_bids);
 		uint[] memory qualities = lib.arr_of_qualities_offerbids(offers_bids);
-		uint[] memory new_indices = getInsertionSortIndices(prices, qualities, ascending_price, ascending_quality);
+		uint[] memory new_indices;
+		if(simulation_test) {
+			uint[] memory quantities = lib.arr_of_quantities_offerbids(offers_bids);
+			new_indices = getInsertionSortIndices_three_keys(prices, qualities, quantities, ascending_price, ascending_quality, ascending_quantity);
+		}
+		else {
+			 new_indices = getInsertionSortIndices_two_keys(prices, qualities, ascending_price, ascending_quality);
+		}
 		return lib.reorderArr_OfferBid(new_indices, offers_bids);
 	}
-	//same as insertionSortOffersBidsPrice_Quality, different version not optimized
-	function insertionSortOffersBidsPrice_Quantity_not_optimized(Lb.Lib.OfferBid[] memory offers_bids, bool ascending_price,  bool ascending_quantity) public view returns(Lb.Lib.OfferBid[] memory) {
-		if(offers_bids.length == 0) return offers_bids;
-		uint[] memory prices = lib.arr_of_prices_offerbids(offers_bids);
-		uint[] memory quantities = lib.arr_of_quantities_offerbids(offers_bids);
-		uint[] memory new_indices = getInsertionSortIndices_not_optimized(prices, quantities, ascending_price, ascending_quantity);
-		return lib.reorderArr_OfferBid(new_indices, offers_bids);
-	}
-	//same as insertionSortOffersBidsPrice_Quality, different version not optimized
-	function insertionSortOffersBidsPrice_Quality_not_optimized(Lb.Lib.OfferBid[] memory offers_bids, bool ascending_price,  bool ascending_quality) public view returns(Lb.Lib.OfferBid[] memory) {
-		if(offers_bids.length == 0) return offers_bids;
-		uint[] memory prices = lib.arr_of_prices_offerbids(offers_bids);
-		uint[] memory qualities = lib.arr_of_qualities_offerbids(offers_bids);
-		uint[] memory new_indices = getInsertionSortIndices_not_optimized(prices, qualities, ascending_price, ascending_quality);
-		return lib.reorderArr_OfferBid(new_indices, offers_bids);
-	}
+	//aggregate positions with the same user id, same price, and same quality. the quantity of energy is summed up
+    function aggregate_identical_positions(Lb.Lib.OfferBid[] memory offers_bids, bool simulation_test) public view returns (Lb.Lib.OfferBid[] memory) {
+        if(offers_bids.length >= 2) {
+            offers_bids = insertionSortOffersBidsPrice_Quality(offers_bids, true, true, simulation_test, true);
+            uint count = offers_bids.length;
+            for(uint i = 1; i < offers_bids.length; i++) {
+                if(lib.compareStrings(offers_bids[i].id_user, offers_bids[i-1].id_user) && offers_bids[i].price_energy == offers_bids[i-1].price_energy && offers_bids[i].quality_energy == offers_bids[i-1].quality_energy) {
+                    count--;
+                }
+            }
+
+            if(count == offers_bids.length) return offers_bids;
+
+            Lb.Lib.OfferBid[] memory aggregated_offers_bids = new Lb.Lib.OfferBid[](count);
+            aggregated_offers_bids[0] = offers_bids[0];
+            uint j = 0;
+            for(uint i = 1; i < offers_bids.length; i++) {
+                if(lib.compareStrings(offers_bids[i].id_user, offers_bids[i-1].id_user) && offers_bids[i].price_energy == offers_bids[i-1].price_energy && offers_bids[i].quality_energy == offers_bids[i-1].quality_energy) {
+                    aggregated_offers_bids[j].qty_energy = aggregated_offers_bids[j].qty_energy + offers_bids[i].qty_energy;
+                }
+                else {
+                    j++;
+                    aggregated_offers_bids[j] = offers_bids[i];
+                }
+            }
+            return aggregated_offers_bids;
+        }
+        return offers_bids;
+    }
 }
